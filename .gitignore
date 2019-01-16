@@ -4,6 +4,12 @@
 ### JupyterNotebook ###
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
+.html
+
+### Pycache files ###
+*/_pycache_/*
+.pyc
+
 
 # Remove previous ipynb_checkpoints
 #   git rm -r .ipynb_checkpoints/

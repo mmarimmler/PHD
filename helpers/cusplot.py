@@ -25,7 +25,7 @@ def add_axis(ax,axis,formula,name):
         ax_new.set_ylabel(name)
         ax_new.yaxis.set_ticks_position('left')
         ax_new.yaxis.set_label_position('left')
-        ax_new.spines['left'].set_position(('outward', 50))
+        ax_new.spines['left'].set_position(('outward', 60))
         ax_new.set_ylim(ax.get_ylim())
         
     return ax_new
