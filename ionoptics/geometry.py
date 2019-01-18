@@ -31,12 +31,12 @@ def s_kick_sept(x_sept,x_add,x_init,kick,perm,init,l_kick,l_sept,sept_type='DC')
     return s,s1,s2
 
 
-def quad_defl(kl,kick,l_kick,l1,l2):
+def quad_defl(k,l,kick,l_kick,l1,l2):
     
     sep = kick*l1+l_kick*kick/2
-    Thet = kl*sep+kick
+    Thet = k*l*sep+kick
     
-    sep2 = Thet*l2+sep
+    sep2 = Thet*l2+l*Thet/2+sep
     
     return sep2
 
@@ -66,15 +66,18 @@ def plot_comb_kick_sept(x_sept,x_add,x_init,init,l_kick,l_sept,sept_type,start_k
         cplt.add_axis(ax[0],'x',calc_magn_sept,'B [T]')
         cplt.add_axis(ax[0],'y',calc_magn_kick,'B [T]')
 
-    ax[1].scatter(list(d.values()),[s_kick_sept_fix(perm,kick)[1] for perm,kick in zip(list(d.keys()),list(d.values()))])
-    ax[1].scatter(list(d.values()),[s_kick_sept_fix(perm,kick)[2] for perm,kick in zip(list(d.keys()),list(d.values()))])
+    fst_arm = [(kick,s_kick_sept_fix(perm,kick)[1]) for perm,kick in zip(list(d.keys()),list(d.values()))]
+    snd_arm = [(kick,s_kick_sept_fix(perm,kick)[2]) for perm,kick in zip(list(d.keys()),list(d.values()))]    
+
+    ax[1].scatter(*zip(*fst_arm))
+    ax[1].scatter(*zip(*snd_arm))
     ax[1].set_ylabel('length [m]')
     ax[1].set_xlabel('kick_angle [rad]')
     ax[1].legend(['kick-sept','sept-max_prop'])
 
+    data = (d,fst_arm,snd_arm)
 
-
-    return ax
+    return ax,data
 
 
 
