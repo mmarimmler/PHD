@@ -1,7 +1,7 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 
-def plot_phase_space(df,s=False):
+def plot_phase_space(df):
     '''
     @param df: dataframe with 7 columns (turn, spatial coordinates, momentum space coordinates)
     @param axes: axes object
@@ -11,7 +11,7 @@ def plot_phase_space(df,s=False):
     
     
     rows = df['element'].nunique()-1 #drop beginning element
-    fig, axes = plt.subplots(rows+1,2, figsize=(15,25),sharex=True)
+    fig, axes = plt.subplots(rows+1,2, figsize=(15,25),sharex=True) #take end element
     ax = plt.subplot2grid((rows+1,2),(rows,0), colspan = 2)
     eles = df['element'].unique()
     eles = eles[1:] #drop beginning element
@@ -51,7 +51,7 @@ def plot_phase_space(df,s=False):
                    )
         
         axes[i][0].legend(['start','end'])
-        axes[i][0].text(0.1,0.9,ele + ' s = {}'.format(df_end_ele['s'].drop_duplicates().tolist()[0]),transform=axes[i][0].transAxes)
+        axes[i][0].text(0.1,0.9,ele + ' s = {:.2f}'.format(df_end_ele['s'].drop_duplicates().tolist()[0]),transform=axes[i][0].transAxes)
         
         df_xmax = df_xmax.append(df_end_ele[df_end_ele['x'] == df_end_ele['x'].max()])
         df_ymax = df_ymax.append(df_end_ele[df_end_ele['y'] == df_end_ele['y'].max()])
@@ -76,9 +76,6 @@ def plot_phase_space(df,s=False):
     print('xmax @  end:', df_xmax[df_xmax['s']==df_xmax['s'].max()]['x'].iloc[0])
     print('ymax @  start:', df_ymax[df_ymax['s']==0]['y'].iloc[0])
     print('ymax @  end:', df_ymax[df_ymax['s']==df_ymax['s'].max()]['y'].iloc[0])
-
-    if s:    
-      plt.savefig('/home/marius/Jülich/Bmad/Playground/Distance_to_Diverge/tracking.png', format='png', dpi = 300)
 
     return axes
 
