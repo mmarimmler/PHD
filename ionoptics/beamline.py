@@ -180,7 +180,7 @@ def Mplot(blist,llist):
 # optimize quadrupole triplet settings (strength)
 
 def opt_trip(l,L,d,k_init):
-
+    #TODO: modify residual fct to allow variation of d,2ndk?
     def residual(k):
         lengths = [l,L,d,L,d,L,l]
         elements = [drift,partial(qdf, k=k[0]),drift,partial(qf, k=k[1]),drift,partial(qdf, k=k[0]),drift]
@@ -198,9 +198,12 @@ def opt_trip(l,L,d,k_init):
     
     return opt.x
 
-def plot_M_vs_s(blist,llist):
+def plot_M_vs_s(blist,llist,**kwargs):
 
-    fig, ax = plt.subplots(1,2, figsize=(15,5))
+    if 'figsize' in kwargs.keys():
+        fig, ax = plt.subplots(1,2, figsize=kwargs['figsize'])
+    else:
+        fig, ax = plt.subplots(1,2) 
 
 
     ax[0].plot(Mplot(blist,llist)[0],Mplot(blist,llist)[1][0])
