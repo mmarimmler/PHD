@@ -215,6 +215,9 @@ def plot_M_vs_s(blist,llist,**kwargs):
     ax[0].legend(['M11','M33'])
     ax[1].legend(['M12','M34'])
 
+    ax[0].set_xlabel('s [m]')
+    ax[1].set_xlabel('s [m]')
+
     return ax
 
 
