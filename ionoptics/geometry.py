@@ -38,7 +38,7 @@ def quad_defl(k,l,kick,l_kick,l1,l2):
     
     sep2 = Thet*l2+l*Thet/2+sep
     
-    return sep2
+    return sep2,Thet
 
 
 def plot_comb_kick_sept(x_sept,x_add,x_init,init,l_kick,l_sept,sept_type,start_kick,step_kick,list_perm,max_prop,**kwargs):
