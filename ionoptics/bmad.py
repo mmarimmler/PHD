@@ -4,7 +4,8 @@ from matplotlib import pyplot as plt
 def plot_phase_space(df,**kwargs):
     '''
     @param df: dataframe with 7 columns (turn, spatial coordinates, momentum space coordinates)
-    @param axes: axes object
+    @param **kwargs: figure keywords
+    @return axes: axes object
     '''
     df_start = df[df.iloc[:,0] == 0]
     df_end = df[df.iloc[:,0] != 0]
@@ -17,7 +18,7 @@ def plot_phase_space(df,**kwargs):
     else:
         fig, axes = plt.subplots(rows+1,2)
         
-    ax = plt.subplot2grid((rows+1,2),(rows,0), colspan = 2)
+    ax = plt.subplot2grid((rows+2,2),(rows,0), rowspan = 2, colspan = 2)
     plt.subplots_adjust(hspace=0.5)
 
     eles = df['element'].unique()
@@ -110,9 +111,23 @@ def plot_phase_space(df,**kwargs):
     
     # print initial ellipse size
     print('xmax @  start:', df_xmax[df_xmax['s']==0]['x'].iloc[0])
+    print('xrms @  start:', df_xrms[df_xrms['s']==0]['x'].iloc[0])
+    print('\n')
+
     print('xmax @  end:', df_xmax[df_xmax['s']==df_xmax['s'].max()]['x'].iloc[0])
+    print('xrms @  end:', df_xrms[df_xrms['s']==df_xrms['s'].max()]['x'].iloc[0])
+    print('\n')
+
     print('ymax @  start:', df_ymax[df_ymax['s']==0]['y'].iloc[0])
+    print('yrms @  start:', df_yrms[df_yrms['s']==0]['y'].iloc[0])
+    print('\n')
+
     print('ymax @  end:', df_ymax[df_ymax['s']==df_ymax['s'].max()]['y'].iloc[0])
+    print('yrms @  end:', df_yrms[df_yrms['s']==df_ymax['s'].max()]['y'].iloc[0])
+    print('\n')
+
+    print('particle loss/%:', df_end_ele[df_end_ele['x']==0].shape[0]/df_end_ele.shape[0]*100)
+    
 
     return axes
 

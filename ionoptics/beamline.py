@@ -179,11 +179,14 @@ def Mplot(blist,llist):
 
 # optimize quadrupole triplet settings (strength)
 
-def opt_trip(l,L,d,k_init):
+def opt_trip(l,L,d,k_init,config='DFD'):
     #TODO: modify residual fct to allow variation of d,2ndk?
     def residual(k):
         lengths = [l,L,d,L,d,L,l]
-        elements = [drift,partial(qdf, k=k[0]),drift,partial(qf, k=k[1]),drift,partial(qdf, k=k[0]),drift]
+        if config == 'DFD':
+            elements = [drift,partial(qdf, k=k[0]),drift,partial(qf, k=k[1]),drift,partial(qdf, k=k[0]),drift]
+        elif config == 'FDF':
+            elements = [drift,partial(qf, k=k[0]),drift,partial(qdf, k=k[1]),drift,partial(qf, k=k[0]),drift]
 
         res = (Mplot(elements,lengths)[1][1][-1])**2 + (Mplot(elements,lengths)[2][1][-1])**2
 
