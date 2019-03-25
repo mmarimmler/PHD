@@ -28,6 +28,7 @@ def plot_phase_space(df,**kwargs):
     
     df_xmax = df_start[df_start['x'] == df_start['x'].max()]
     df_xrms = df_start.groupby('s').agg({'x':'std'}).reset_index()
+    df_xprms = df_start.groupby('s').agg({'xp':'std'}).reset_index()
     df_ymax = df_start[df_start['y'] == df_start['y'].max()]
     df_yrms = df_start.groupby('s').agg({'y':'std'}).reset_index()
     
@@ -65,6 +66,7 @@ def plot_phase_space(df,**kwargs):
         
         df_xmax = df_xmax.append(df_end_ele[df_end_ele['x'] == df_end_ele['x'].max()])
         df_xrms = df_xrms.append(df_end_ele.groupby('s').agg({'x':'std'}).reset_index())
+        df_xprms = df_xprms.append(df_end_ele.groupby('s').agg({'xp':'std'}).reset_index())
         df_ymax = df_ymax.append(df_end_ele[df_end_ele['y'] == df_end_ele['y'].max()])
         df_yrms = df_yrms.append(df_end_ele.groupby('s').agg({'y':'std'}).reset_index())
         
@@ -112,6 +114,7 @@ def plot_phase_space(df,**kwargs):
     # print initial ellipse size
     print('xmax @  start:', df_xmax[df_xmax['s']==0]['x'].iloc[0])
     print('xrms @  start:', df_xrms[df_xrms['s']==0]['x'].iloc[0])
+    print('xprms @  start:', df_xprms[df_xprms['s']==0]['xp'].iloc[0])
     print('\n')
 
     print('xmax @  end:', df_xmax[df_xmax['s']==df_xmax['s'].max()]['x'].iloc[0])
