@@ -92,10 +92,58 @@ def drift(L):
     
     return M
 
+
+
+def dipole(L,L_max,alpha,beta):
+    '''@ param L: scalar, length of path in dipole
+       @ param alpha: scalar, bending angle in rad
+       @ param beta: face angle in rad, 0 for SBEND, alpha/2 for RBEND'''
+
+    rho_0 = L_max/alpha
+
+    alpha = L/rho_0   
+
+    E11 = 1
+    E12 = 0
+    E21 = np.tan(beta)/rho_0
+    E22 = 1
+    
+    E33 = 1
+    E34 = 0
+    E43 = -np.tan(beta)/rho_0 #TODO: just approx.
+    E44 = 1
+    
+    E = np.array([[E11,E12,0,0],[E21,E22,0,0],[0,0,E33,E34],[0,0,E43,E44]])
+
+    M11 = np.cos(alpha)
+    M12 = rho_0*np.sin(alpha)
+    M21 = -np.sin(alpha)/rho_0
+    M22 = np.cos(alpha)
+    
+    M33 = 1
+    M34 = L
+    M43 = 0
+    M44 = 1
+
+    M = np.array([[M11,M12,0,0],[M21,M22,0,0],[0,0,M33,M34],[0,0,M43,M44]])
+
+    M = bl([E,M,E])
+    #TODO: this gives the right result at the end but however
+    # is wrong for plotting since all elements plotted have edge
+    # focusing effects which only occur at the beg/end. 
+
+    #M = bl([E,M])
+    #if L == L_max:
+    #   M = bl([E,M,E]) #does not work properly because last point is omitted 
+
+
+    
+    return M    
+
 # transport matrix of beamline
     
 def bl(matrices):
-    
+    '''@ param matrices: list starting with first transport matrix'''
     for index in range(len(matrices)):
         try:
             matrices[index+1] = np.matmul(matrices[index+1],matrices[index])
@@ -179,20 +227,43 @@ def Mplot(blist,llist):
 
 # optimize quadrupole triplet settings (strength)
 
-def opt_trip(l,L,d,k_init,config='DFD'):
-    #TODO: modify residual fct to allow variation of d,2ndk?
-    def residual(k):
-        lengths = [l,L,d,L,d,L,l]
-        if config == 'DFD':
-            elements = [drift,partial(qdf, k=k[0]),drift,partial(qf, k=k[1]),drift,partial(qdf, k=k[0]),drift]
-        elif config == 'FDF':
-            elements = [drift,partial(qf, k=k[0]),drift,partial(qdf, k=k[1]),drift,partial(qf, k=k[0]),drift]
+def opt_quad_mult(elements,lengths,image='P-to-P',S=True,prec=1e-3,iters=100,**kwargs):
+    '''calculate quadrupole strengths for arbitrary sequence of beam line elements 
+       for point-to-point or point-to-parallel imaging
+       @param elements: list of functions, (drift, qdf, etc.)
+       @param lengths: list of floats, lengths (caution: analyzation steps ~ digits of lengths
+       @param image: string, P-to-P or P-to-Par
+       @param S: bool, symmetric configuration
+       @param prec: float, tolerance for termination
+       @param iters: int, max. no. of iterations
+       @param **kwargs: e.g. k_init: list, start values for k
+       @return: list, optimized values for k'''
 
-        res = (Mplot(elements,lengths)[1][1][-1])**2 + (Mplot(elements,lengths)[2][1][-1])**2
+    no_qs = len([x for x in elements if (x == qdf or x == qf)])
+
+    def residual(k):
+
+        p_elements = eles_to_peles(elements,k,S)
+                
+
+
+        if image == 'P-to-P':
+            res = (Mplot(p_elements,lengths)[1][1][-1])**2 + (Mplot(p_elements,lengths)[2][1][-1])**2
+        elif image == 'P-to-Par':
+            res = (Mplot(p_elements,lengths)[1][0][-1])**2 + (Mplot(p_elements,lengths)[2][0][-1])**2
+
 
         return res
 
-    opt = sco.minimize(residual,[k_init[0],k_init[1]],tol=1e-3)
+    if 'k_init' in kwargs.keys():
+        k_init = kwargs['k_init']
+    else:
+        if S:
+            k_init = [2]*round(no_qs/2)
+        else:
+            k_init = [2]*no_qs
+
+    opt = sco.minimize(residual,k_init,tol=prec,options={'maxiter':iters})
     
     if opt.success == False:
         print(opt.status)
@@ -222,6 +293,40 @@ def plot_M_vs_s(blist,llist,**kwargs):
     ax[1].set_xlabel('s [m]')
 
     return ax
+
+def eles_to_peles(elements,k,S):
+    '''convert list of elements to list with partials and fixed ks, considers symmetry
+       @param elements: list of functions (w/o partials)
+       @param k: list of quadrupole strengths t.b. assigned
+       @param S: bool, symmetry. length of k needs to be adapted
+       @return: list of functions, k assigned, w/ partials'''
+
+    no_qs = len([x for x in elements if (x == qdf or x == qf)])
+
+    p_elements = []
+    j = 0
+    q = 0
+    for i,x in enumerate(elements):
+        if x == qdf or x == qf:
+
+            p_elements.append(partial(x,k = k[j]))
+
+            if S:
+                if q+1 > no_qs/2:
+                    j-=1
+                elif q+1 == no_qs/2:
+                    pass
+                else:
+                    j+=1
+            else:
+                j+=1
+
+            q+=1
+
+        else:
+            p_elements.append(elements[i])  
+
+    return p_elements
 
 
 
