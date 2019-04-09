@@ -94,10 +94,10 @@ def drift(L):
 
 
 
-def dipole(L,L_max,alpha,beta):
+def dipole(L,L_max,alpha,beta_s=0,beta_e=0):
     '''@ param L: scalar, length of path in dipole
        @ param alpha: scalar, bending angle in rad
-       @ param beta: face angle in rad, 0 for SBEND, alpha/2 for RBEND'''
+       @ param beta: face angle in rad, 0 for SBEND (default), alpha/2 for RBEND, (larger, outer arc smaller)'''
 
     rho_0 = L_max/alpha
 
@@ -105,15 +105,29 @@ def dipole(L,L_max,alpha,beta):
 
     E11 = 1
     E12 = 0
-    E21 = np.tan(beta)/rho_0
+    E21 = np.tan(beta_s)/rho_0
     E22 = 1
     
     E33 = 1
     E34 = 0
-    E43 = -np.tan(beta)/rho_0 #TODO: just approx.
+    E43 = -np.tan(beta_s)/rho_0 #TODO: just approx.
     E44 = 1
     
-    E = np.array([[E11,E12,0,0],[E21,E22,0,0],[0,0,E33,E34],[0,0,E43,E44]])
+    E_s = np.array([[E11,E12,0,0],[E21,E22,0,0],[0,0,E33,E34],[0,0,E43,E44]])
+
+    E11 = 1
+    E12 = 0
+    E21 = np.tan(beta_e)/rho_0
+    E22 = 1
+    
+    E33 = 1
+    E34 = 0
+    E43 = -np.tan(beta_e)/rho_0 #TODO: just approx.
+    E44 = 1
+    
+    E_e = np.array([[E11,E12,0,0],[E21,E22,0,0],[0,0,E33,E34],[0,0,E43,E44]])
+
+
 
     M11 = np.cos(alpha)
     M12 = rho_0*np.sin(alpha)
@@ -127,7 +141,7 @@ def dipole(L,L_max,alpha,beta):
 
     M = np.array([[M11,M12,0,0],[M21,M22,0,0],[0,0,M33,M34],[0,0,M43,M44]])
 
-    M = bl([E,M,E])
+    M = bl([E_s,M,E_e])
     #TODO: this gives the right result at the end but however
     # is wrong for plotting since all elements plotted have edge
     # focusing effects which only occur at the beg/end. 
