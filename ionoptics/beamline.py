@@ -257,6 +257,10 @@ def opt_quad_mult(elements,lengths,image='P-to-P',S=True,prec=1e-3,iters=100,**k
 
     def residual(k):
 
+        if 'k_fix' in kwargs.keys():
+            for pos in kwargs['k_fix'].keys():
+                k[pos] = kwargs['k_fix'][pos]
+
         p_elements = eles_to_peles(elements,k,S)
                 
 
