@@ -1,9 +1,10 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 
-def plot_phase_space(df,**kwargs):
+def plot_phase_space(df,ele_w = False,**kwargs):
     '''
     @param df: dataframe with 7 columns (turn, spatial coordinates, momentum space coordinates)
+    @param ele_w: True - element-wise plotting of phase spaces
     @param **kwargs: figure keywords
     @return axes: axes object
     '''
@@ -13,12 +14,23 @@ def plot_phase_space(df,**kwargs):
     
     rows = df['element'].nunique()-1 #drop beginning element
 
+    #figsize specified? element-wise layout?
     if 'figsize' in kwargs.keys():
-        fig, axes = plt.subplots(rows+1,2, figsize=kwargs['figsize']) #take end element
+        if ele_w==True:
+            fig, axes = plt.subplots(rows+1,2, figsize=kwargs['figsize']) #take end element
+            ax = plt.subplot2grid((rows+2,2),(rows,0), rowspan = 2, colspan = 2)
+        else:
+            fig, axes = plt.subplots(1,2, figsize=kwargs['figsize']) #take end element
+            ax = plt.subplot2grid((2,2),(1,0), rowspan = 2, colspan = 2)
     else:
-        fig, axes = plt.subplots(rows+1,2)
-        
-    ax = plt.subplot2grid((rows+2,2),(rows,0), rowspan = 2, colspan = 2)
+        if ele_w==True:
+            fig, axes = plt.subplots(rows+1,2)
+            ax = plt.subplot2grid((rows+2,2),(rows,0), rowspan = 2, colspan = 2)
+        else:
+            fig, axes = plt.subplots(1,2)
+            ax = plt.subplot2grid((3,2),(1,0), rowspan = 2, colspan = 2)
+    
+
     plt.subplots_adjust(hspace=0.5)
 
     eles = df['element'].unique()
@@ -34,80 +46,112 @@ def plot_phase_space(df,**kwargs):
     
     for i,ele in enumerate(eles):
         df_end_ele = df_end[df_end['element']==ele]
-        
-        df_start.plot(x = 'x',
-                      y = 'xp', 
-                      kind = 'scatter',
-                      ax = axes[i][0],
-                      c = 'r'
-                     )
 
-        df_end_ele.plot(x = 'x',
-                    y = 'xp', 
-                    kind = 'scatter',
-                    ax = axes[i][0]
-                   )
-    
-        df_start.plot(x = 'y',
-                      y = 'yp', 
-                      kind = 'scatter',
-                      ax = axes[i][1],
-                      c = 'r'
-                     )
-
-        df_end_ele.plot(x = 'y',
-                    y = 'yp', 
-                    kind = 'scatter',
-                    ax = axes[i][1]
-                   )
+        if ele_w==True:
         
-        axes[i][1].legend(['start','end'])
-        axes[i][0].text(0.1,0.9,ele + ' s = {:.2f}'.format(df_end_ele['s'].drop_duplicates().tolist()[0]),transform=axes[i][0].transAxes)
+            df_start.plot(x = 'x',
+                          y = 'xp', 
+                          kind = 'scatter',
+                          ax = axes[i][0],
+                          c = 'r'
+                         )
+
+            df_end_ele.plot(x = 'x',
+                        y = 'xp', 
+                        kind = 'scatter',
+                        ax = axes[i][0]
+                       )
+        
+            df_start.plot(x = 'y',
+                          y = 'yp', 
+                          kind = 'scatter',
+                          ax = axes[i][1],
+                          c = 'r'
+                         )
+
+            df_end_ele.plot(x = 'y',
+                        y = 'yp', 
+                        kind = 'scatter',
+                        ax = axes[i][1]
+                       )
+
+
+        
+            axes[i][1].legend(['start','end'])
+            axes[i][0].text(0.1,0.9,ele + ' s = {:.2f}'.format(df_end_ele['s'].drop_duplicates().tolist()[0]),transform=axes[i][0].transAxes)
         
         df_xmax = df_xmax.append(df_end_ele[df_end_ele['x'] == df_end_ele['x'].max()])
         df_xrms = df_xrms.append(df_end_ele.groupby('s').agg({'x':'std'}).reset_index())
         df_xprms = df_xprms.append(df_end_ele.groupby('s').agg({'xp':'std'}).reset_index())
         df_ymax = df_ymax.append(df_end_ele[df_end_ele['y'] == df_end_ele['y'].max()])
         df_yrms = df_yrms.append(df_end_ele.groupby('s').agg({'y':'std'}).reset_index())
+
+    if ele_w==False:
+
+        df_start.plot(x = 'x',
+                      y = 'xp', 
+                      kind = 'scatter',
+                      ax = axes[0],
+                      c = 'r'
+                      )
+
+        df_end_ele.plot(x = 'x',
+                        y = 'xp', 
+                        kind = 'scatter',
+                        ax = axes[0]
+                       )
+
+        df_start.plot(x = 'y',
+                      y = 'yp', 
+                      kind = 'scatter',
+                      ax = axes[1],
+                      c = 'r'
+                     )
+
+        df_end_ele.plot(x = 'y',
+                        y = 'yp', 
+                        kind = 'scatter',
+                        ax = axes[1]
+                       )
         
         
-    df_xmax.plot(x = 's',
-                 y = 'x',
-                 ax = ax,
-                 marker = 'o',
-                 c = 'g'
-                )
+    # df_xmax.plot(x = 's',
+    #              y = 'x',
+    #              ax = ax,
+    #              marker = 'o',
+    #              c = 'g'
+    #             )
 
 
-    df_xrms.plot(x = 's',
-                 y = 'x',
-                 ax = ax,
-                 marker = 'o',
-                 linestyle = '--',
-                 c = 'g'
-                )
+    # df_xrms.plot(x = 's',
+    #              y = 'x',
+    #              ax = ax,
+    #              marker = 'o',
+    #              linestyle = '--',
+    #              c = 'g'
+    #             )
 
 
     
-    df_ymax.plot(x = 's',
-                 y = 'y',
-                 ax = ax,
-                 marker = 'o',
-                 c = 'm'
-                )
+    # df_ymax.plot(x = 's',
+    #              y = 'y',
+    #              ax = ax,
+    #              marker = 'o',
+    #              c = 'm'
+    #             )
 
 
-    df_yrms.plot(x = 's',
-                 y = 'y',
-                 ax = ax,
-                 marker = 'o',
-                 linestyle = '--',
-                 c = 'm'
-                )
+    # df_yrms.plot(x = 's',
+    #              y = 'y',
+    #              ax = ax,
+    #              marker = 'o',
+    #              linestyle = '--',
+    #              c = 'm'
+    #             )
 
-    ax.legend(['x_max','x_rms','y_max','y_rms'])
-    ax.set_ylabel('semi-axis [m]')
-    ax.set_xlabel('s [m]')
+    # ax.legend(['x_max','x_rms','y_max','y_rms'])
+    # ax.set_ylabel('semi-axis [m]')
+    # ax.set_xlabel('s [m]')
 
 
     
