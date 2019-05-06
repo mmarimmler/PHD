@@ -1,7 +1,6 @@
 import pandas as pd
 from matplotlib import pyplot as plt
-from matplotlib.ticker import FormatStrFormatter
-#TODO: fix sci notation to be above axis
+import matplotlib.ticker as ticker
 
 def plot_phase_space(df,ele_w = False,**kwargs):
     '''
@@ -23,9 +22,13 @@ def plot_phase_space(df,ele_w = False,**kwargs):
             fig, axes = plt.subplots(rows+1,2, figsize=kwargs['figsize']) #take end element
             ax = plt.subplot2grid((rows+2,2),(rows,0), rowspan = 2, colspan = 2)
         else:
-            fig,ax = plt.subplots(1,1,figsize=kwargs['figsize'])
-            ax0 = fig.add_axes([0.2,1,0.2,0.2])
-            ax1 = fig.add_axes([0.8,1,0.2,0.2])
+            fig = plt.figure(figsize=kwargs['figsize'])
+
+            gs = fig.add_gridspec(2,3)
+            
+            ax = fig.add_subplot(gs[:,:2])
+            ax0 = fig.add_subplot(gs[0,2])
+            ax1 = fig.add_subplot(gs[1,2])
     else:
         if ele_w==True:
             fig, axes = plt.subplots(rows+1,2)
@@ -35,7 +38,7 @@ def plot_phase_space(df,ele_w = False,**kwargs):
             ax = plt.subplot2grid((3,2),(1,0), rowspan = 2, colspan = 2)
     
 
-    plt.subplots_adjust(hspace=0.5)
+    plt.subplots_adjust(hspace=0.5,wspace=0.3)
 
     eles = df['element'].unique()
     eles = eles[1:] #drop beginning element
@@ -123,6 +126,25 @@ def plot_phase_space(df,ele_w = False,**kwargs):
                         kind = 'scatter',
                         ax = ax1
                        )
+
+        ax0.legend(['start','end'])
+
+        # convert ticks into mm
+        ticks_ax0_x = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e-3))
+        ticks_ax0_y = ticker.FuncFormatter(lambda y, pos: '{0:g}'.format(y/1e-3))
+        ax0.xaxis.set_major_formatter(ticks_ax0_x)
+        ax0.yaxis.set_major_formatter(ticks_ax0_y)
+        ax0.set_xlabel('x in mm')
+        ax0.set_ylabel('x´ in mrad')
+
+        ticks_ax1_x = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x/1e-3))
+        ticks_ax1_y = ticker.FuncFormatter(lambda y, pos: '{0:g}'.format(y/1e-3))
+        ax1.xaxis.set_major_formatter(ticks_ax1_x)
+        ax1.yaxis.set_major_formatter(ticks_ax1_y)
+        ax1.set_xlabel('y in mm')
+        ax1.set_ylabel('y´ in mrad')
+
+        
         
         
     df_xmax.plot(x = 's',
@@ -139,15 +161,13 @@ def plot_phase_space(df,ele_w = False,**kwargs):
                  c = 'g'
                 )
 
-    ax.fill_between(df_xrms['s'],
-                    df_xrms['x'],
-                    df_xrms['-x'],
-                    linestyle = '--',
-                    color = 'g',
-                    alpha = 0.5
-                     )   
-
-    #TODO: add scientific axis notation            
+    x_fill=ax.fill_between(df_xrms['s'],
+                           df_xrms['x'],
+                           df_xrms['-x'],
+                           linestyle = '--',
+                           color = 'g',
+                           alpha = 0.5
+                          )          
 
 
     
@@ -166,17 +186,21 @@ def plot_phase_space(df,ele_w = False,**kwargs):
                 )
 
 
-    ax.fill_between(df_yrms['s'],
-                    df_yrms['y'],
-                    df_yrms['-y'],
-                    linestyle = '--',
-                    color = 'm',
-                    alpha = 0.5
-                     )
+    y_fill=ax.fill_between(df_yrms['s'],
+                           df_yrms['y'],
+                           df_yrms['-y'],
+                           linestyle = '--',
+                           color = 'm',
+                           alpha = 0.5
+                          )
 
-    ax.legend(['x_max','x_rms','y_max','y_rms'])
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
-    ax.set_ylabel('beam size in m')
+    h,_ = ax.get_legend_handles_labels()
+    ax.legend([h[0],h[2],x_fill,y_fill],['x_max','y_max','x_RMS','y_RMS'])
+    
+
+    ticks_ax_y = ticker.FuncFormatter(lambda y, pos: '{0:g}'.format(y/1e-3))
+    ax.yaxis.set_major_formatter(ticks_ax_y)
+    ax.set_ylabel('beam size in mm')
     ax.set_xlabel('s in m')
 
 
