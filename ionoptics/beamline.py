@@ -3,92 +3,103 @@ from matplotlib import pyplot as plt
 import scipy.optimize as sco
 from functools import partial
 
+gamma = 1
 
 # ion optical elements
 
-def qf(L,k,t=False):
-    
-    c = np.cos(np.sqrt(k)*L)
-    s = np.sin(np.sqrt(k)*L)
-    
-    ch = np.cosh(np.sqrt(k)*L)
-    sh = np.sinh(np.sqrt(k)*L)
-    
-    M11 = c
-    M12 = s/np.sqrt(k)
-    M21 = -np.sqrt(k)*s
-    M22 = c
-    
-    M33 = ch
-    M34 = sh/np.sqrt(k)
-    M43 = np.sqrt(k)*sh
-    M44 = ch
-    
-    if t:
-        M11 = 1
-        M12 = 0
-        M21 = -k*L
-        M22 = 1
-        
-        M33 = 1
-        M34 = 0
-        M43 = k*L
-        M44 = 1
-    
-    
-    
-    M = np.array([[M11,M12,0,0],[M21,M22,0,0],[0,0,M33,M34],[0,0,M43,M44]])
+def q(L,k,t=False):
+    '''
+    quad. k>0 (foc. in x), k<0 (foc. in y) for pos. part.
+    :param L: float, eff. length
+    :param k: float, quad. strength
+    :param t: bool, thin lens approx. (1)
+    :return: 6x6 dim. transport matrix
+    '''
+
+    M = np.identity(6)
+
+    if k>0:
+
+        c = np.cos(np.sqrt(k)*L)
+        s = np.sin(np.sqrt(k)*L)
+
+        ch = np.cosh(np.sqrt(k)*L)
+        sh = np.sinh(np.sqrt(k)*L)
+
+        M[0][0] = c
+        M[0][1] = s/np.sqrt(k)
+        M[1][0] = -np.sqrt(k)*s
+        M[1][1] = c
+
+        M[2][2] = ch
+        M[2][3] = sh/np.sqrt(k)
+        M[3][2] = np.sqrt(k)*sh
+        M[3][3] = ch
+
+        if t:
+            M[0][0] = 1
+            M[0][1] = 0
+            M[1][0] = -k*L
+            M[1][1] = 1
+
+            M[2][2] = 1
+            M[2][3] = 0
+            M[3][2] = k*L
+            M[3][3] = 1
+
+    if k<0:
+
+        k = np.abs(k)
+
+        ch = np.cosh(np.sqrt(k) * L)
+        sh = np.sinh(np.sqrt(k) * L)
+
+        c = np.cos(np.sqrt(k) * L)
+        s = np.sin(np.sqrt(k) * L)
+
+        M[0][0] = ch
+        M[0][1] = sh / np.sqrt(k)
+        M[1][0] = np.sqrt(k) * sh
+        M[1][1] = ch
+
+        M[2][2] = c
+        M[2][3] = s / np.sqrt(k)
+        M[3][2] = -np.sqrt(k) * s
+        M[3][3] = c
+
+        if t:
+            M[0][0] = 1
+            M[0][1] = 0
+            M[1][0] = k * L
+            M[1][1] = 1
+
+            M[2][2] = 1
+            M[2][3] = 0
+            M[3][2] = -k * L
+            M[3][3] = 1
+
+
+    if k==0:
+
+        M = drift(L)
+
+    M[4][5] = L/gamma
     
     return M
 
-def qdf(L,k,t=False):
-    
-    ch = np.cosh(np.sqrt(k)*L)
-    sh = np.sinh(np.sqrt(k)*L)
-    
-    c = np.cos(np.sqrt(k)*L)
-    s = np.sin(np.sqrt(k)*L)
-    
-    M11 = ch
-    M12 = sh/np.sqrt(k)
-    M21 = np.sqrt(k)*sh
-    M22 = ch
-    
-    M33 = c
-    M34 = s/np.sqrt(k)
-    M43 = -np.sqrt(k)*s
-    M44 = c
-    
-    if t:
-        M11 = 1
-        M12 = 0
-        M21 = k*L
-        M22 = 1
-        
-        M33 = 1
-        M34 = 0
-        M43 = -k*L
-        M44 = 1
-    
-    
-    
-    M = np.array([[M11,M12,0,0],[M21,M22,0,0],[0,0,M33,M34],[0,0,M43,M44]])
-    
-    return M
+
 
 def drift(L):
+
+    M = np.identity(6)
     
-    M11 = 1
-    M12 = L
-    M21 = 0
-    M22 = 1
-    
-    M33 = 1
-    M34 = L
-    M43 = 0
-    M44 = 1
-    
-    M = np.array([[M11,M12,0,0],[M21,M22,0,0],[0,0,M33,M34],[0,0,M43,M44]])
+
+    M[0][1] = L
+
+    M[2][3] = L
+
+    M[4][5] = L / gamma
+
     
     return M
 
@@ -101,57 +112,40 @@ def dipole(L,L_max,alpha,beta_s=0,beta_e=0):
 
     rho_0 = L_max/alpha
 
-    alpha = L/rho_0   
+    alpha = L/rho_0
 
-    E11 = 1
-    E12 = 0
-    E21 = np.tan(beta_s)/rho_0
-    E22 = 1
-    
-    E33 = 1
-    E34 = 0
-    E43 = -np.tan(beta_s)/rho_0 #TODO: just approx.
-    E44 = 1
-    
-    E_s = np.array([[E11,E12,0,0],[E21,E22,0,0],[0,0,E33,E34],[0,0,E43,E44]])
+    E_s = np.identity(6)
 
-    E11 = 1
-    E12 = 0
-    E21 = np.tan(beta_e)/rho_0
-    E22 = 1
-    
-    E33 = 1
-    E34 = 0
-    E43 = -np.tan(beta_e)/rho_0 #TODO: just approx.
-    E44 = 1
-    
-    E_e = np.array([[E11,E12,0,0],[E21,E22,0,0],[0,0,E33,E34],[0,0,E43,E44]])
+    E_s[1][0] = np.tan(beta_s)/rho_0
+    E_s[3][2] = -np.tan(beta_s)/rho_0 #TODO: just approx.
+
+    E_e = np.identity(6)
+
+    E_e[1][0] = np.tan(beta_e)/rho_0
+    E_e[3][2] = -np.tan(beta_e)/rho_0 #TODO: just approx.
+
+    M = np.identity(6)
+
+    M[0][0] = np.cos(alpha)
+    M[0][1] = rho_0*np.sin(alpha)
+    M[0][5] = rho_0*(1-np.cos(alpha))
+    M[1][0] = -np.sin(alpha)/rho_0
+    M[1][1] = np.cos(alpha)
+    M[1][5] = np.sin(alpha)
+
+    M[2][3] = L
+
+    M[4][0] = -np.sin(alpha)
+    M[4][1] = -rho_0*(1-np.cos(alpha))
+    M[4][5] = rho_0*alpha/gamma**2-rho_0*(alpha-np.sin(alpha))
 
 
-
-    M11 = np.cos(alpha)
-    M12 = rho_0*np.sin(alpha)
-    M21 = -np.sin(alpha)/rho_0
-    M22 = np.cos(alpha)
-    
-    M33 = 1
-    M34 = L
-    M43 = 0
-    M44 = 1
-
-    M = np.array([[M11,M12,0,0],[M21,M22,0,0],[0,0,M33,M34],[0,0,M43,M44]])
 
     M = bl([E_s,M,E_e])
     #TODO: this gives the right result at the end but however
     # is wrong for plotting since all elements plotted have edge
-    # focusing effects which only occur at the beg/end. 
+    # focusing effects which only occur at the beg/end.
 
-    #M = bl([E,M])
-    #if L == L_max:
-    #   M = bl([E,M,E]) #does not work properly because last point is omitted 
-
-
-    
     return M    
 
 # transport matrix of beamline
